@@ -86,3 +86,29 @@ class Node:
                 self.children[move] = child
                 return child
         raise RuntimeError("expand() called on a fully expanded node")
+
+
+def backpropagate(node: Node, winning_player: str | None) -> None:
+    """Walk from `node` up to the root, updating visits and value_sum at
+    every node on the path.
+
+    Value convention: a node's value_sum represents the win rate for
+    whichever player made the move that LED to this node -- i.e. the
+    player who was to move at this node's parent. That's always
+    other_player(node.player_to_move), since node.player_to_move is
+    whoever moves NEXT, not whoever just moved.
+    """
+    from bridge.mcts.tictactoe import other_player
+
+    current = node
+    while current is not None:
+        current.visits += 1
+        mover = other_player(current.player_to_move)
+        if winning_player is None:
+            reward = 0.5  # draw
+        elif winning_player == mover:
+            reward = 1.0
+        else:
+            reward = 0.0
+        current.value_sum += reward
+        current = current.parent
