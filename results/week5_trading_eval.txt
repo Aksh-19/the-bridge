@@ -1,0 +1,5 @@
+Episodes: 300, MCTS iterations per move: 500
+MCTS   mean return: +1.088 +/- 0.242 (95% CI)
+Greedy mean return: +0.237 +/- 0.124 (95% CI)
+MCTS - greedy (paired): +0.852 +/- 0.240 (95% CI)
+MCTS better in 112, tied in 140, worse in 48 episodes
