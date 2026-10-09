@@ -39,4 +39,4 @@ reports/        final write-up
 
 ## Status
 
-Work in progress. Currently: project setup (Phase 0).
+Complete through Week 6. Results and annotated examples: reports/report.md.
