@@ -1,4 +1,4 @@
-"""Week 5: MCTS adapted to a one-player, stochastic environment.
+"""Week 5-6: MCTS adapted to a one-player, stochastic environment.
 
 Differences from the tic-tac-toe agent: a node's value is plain total
 reward (no per-player perspective), and because the same action can lead
@@ -20,6 +20,15 @@ class StateNode:
         self.action_visits: dict[str, int] = {}
         self.action_value_sum: dict[str, float] = {}
         self.children: dict[tuple[str, State], StateNode] = {}
+        # How many times each (action, next_state) branch was traversed.
+        self.edge_visits: dict[tuple[str, State], int] = {}
+
+    def mean_value(self, action: str) -> float:
+        """Average return-to-go observed after taking `action` here."""
+        n = self.action_visits.get(action, 0)
+        if n == 0:
+            return 0.0
+        return self.action_value_sum[action] / n
 
     def untried_action(self, actions: tuple[str, ...]) -> str | None:
         """First action never tried from this node, or None if all tried."""
@@ -55,14 +64,19 @@ def rollout_return(env: TradingEnv, state: State, rng: random.Random) -> float:
     return total
 
 
-def mcts_trading_move(
+def most_visited_action(root: StateNode) -> str:
+    """The standard MCTS move choice: the root action visited most."""
+    return max(root.action_visits, key=lambda a: root.action_visits[a])
+
+
+def mcts_trading_search(
     env: TradingEnv,
     state: State,
     n_iterations: int = 500,
     c: float = 3.0,
     rng: random.Random | None = None,
-) -> str:
-    """Run MCTS from `state`, return the most-visited root action."""
+) -> StateNode:
+    """Run MCTS from `state` and return the finished search tree."""
     if rng is None:
         rng = random.Random()
 
@@ -84,6 +98,7 @@ def mcts_trading_move(
             path.append((node, action, reward))
 
             key = (action, next_state)
+            node.edge_visits[key] = node.edge_visits.get(key, 0) + 1
             if key not in node.children:
                 node.children[key] = StateNode(next_state)
                 # Simulate: random playout from the new node.
@@ -97,4 +112,16 @@ def mcts_trading_move(
             ret = reward + ret
             visited.update(action, ret)
 
-    return max(root.action_visits, key=lambda a: root.action_visits[a])
+    return root
+
+
+def mcts_trading_move(
+    env: TradingEnv,
+    state: State,
+    n_iterations: int = 500,
+    c: float = 3.0,
+    rng: random.Random | None = None,
+) -> str:
+    """Run MCTS from `state`, return the most-visited root action."""
+    root = mcts_trading_search(env, state, n_iterations, c, rng)
+    return most_visited_action(root)
